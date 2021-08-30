@@ -14,27 +14,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.benhumphreys.jgitcassandra;
+package com.minus.git.server
 
-import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Ref
 
 /**
  * Utility functions shared between multiple classes
  */
-public class Utils {
+object Utils {
     /**
      * Compares references by object id.
      *
      * @return true if the refs a & b have the same object id, also true if
      * the object ids for both refs are null, otherwise false
      */
-    public static boolean refsHaveEqualObjectId(Ref a, Ref b) {
-        if (a.getObjectId() == null && b.getObjectId() == null) {
-            return true;
+    fun refsHaveEqualObjectId(a: Ref, b: Ref): Boolean {
+        if (a.objectId == null && b.objectId == null) {
+            return true
         }
-        if (a.getObjectId() != null) {
-            return a.getObjectId().equals(b.getObjectId());
-        }
-        return false;
+        return if (a.objectId != null) {
+            a.objectId.equals(b.objectId)
+        } else false
     }
 }

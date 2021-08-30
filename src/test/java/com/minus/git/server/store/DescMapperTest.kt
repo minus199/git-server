@@ -14,75 +14,82 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.benhumphreys.jgitcassandra.store;
+package com.minus.git.server.store
 
-import org.eclipse.jgit.internal.storage.dfs.DfsPackDescription;
-import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription;
-import org.eclipse.jgit.internal.storage.pack.PackExt;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.eclipse.jgit.internal.storage.dfs.DfsPackDescription
+import kotlin.Throws
+import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription
+import com.minus.git.server.store.DescMapperTest
+import org.eclipse.jgit.internal.storage.dfs.DfsObjDatabase
+import org.eclipse.jgit.internal.storage.pack.PackExt
+import org.junit.After
+import org.junit.Assert
+import org.junit.Before
+import org.junit.Test
+import java.lang.Exception
+import java.util.HashMap
 
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.junit.Assert.*;
-
-public class DescMapperTest {
-    private static final String DESC_NAME = "testdesc";
-    private DfsPackDescription desc;
-
+class DescMapperTest {
+    private var desc: DfsPackDescription? = null
     @Before
-    public void setUp() throws Exception {
-        desc = new DfsPackDescription(new DfsRepositoryDescription(), DESC_NAME);
+    @Throws(Exception::class)
+    fun setUp() {
+        desc = DfsPackDescription(DfsRepositoryDescription(), DESC_NAME, DfsObjDatabase.PackSource.COMPACT)
     }
 
     @After
-    public void tearDown() throws Exception {
-        desc = null;
+    @Throws(Exception::class)
+    fun tearDown() {
+        desc = null
     }
 
     @Test
-    public void testGetFileSizeMap() throws Exception {
+    @Throws(Exception::class)
+    fun testGetFileSizeMap() {
         // Prepare the desc object
-        desc.setFileSize(PackExt.PACK, 1L);
-        desc.setFileSize(PackExt.INDEX, 2L);
+        desc!!.setFileSize(PackExt.PACK, 1L)
+        desc!!.setFileSize(PackExt.INDEX, 2L)
 
         // Test the mapper
-        Map<String, Long> extSizes = DescMapper.getFileSizeMap(desc);
-        assertEquals(Long.valueOf(1), extSizes.get(PackExt.PACK.getExtension()));
-        assertEquals(Long.valueOf(2), extSizes.get(PackExt.INDEX.getExtension()));
-        assertFalse(extSizes.containsKey(PackExt.BITMAP_INDEX.getExtension()));
+        val extSizes = desc!!.computeFileSizeMap()
+        Assert.assertEquals(java.lang.Long.valueOf(1), extSizes[PackExt.PACK.extension])
+        Assert.assertEquals(java.lang.Long.valueOf(2), extSizes[PackExt.INDEX.extension])
+        Assert.assertFalse(extSizes.containsKey(PackExt.BITMAP_INDEX.extension))
     }
 
     @Test
-    public void testSetFileSizeMap() throws Exception {
-        Map<String, Long> extSizes = new HashMap<String, Long>();
-        extSizes.put("pack", 1L);
-        extSizes.put("idx", 2L);
-
-        DescMapper.setFileSizeMap(desc, extSizes);
-        assertEquals(1, desc.getFileSize(PackExt.PACK));
-        assertEquals(2, desc.getFileSize(PackExt.INDEX));
-        assertEquals(0, desc.getFileSize(PackExt.BITMAP_INDEX));
+    @Throws(Exception::class)
+    fun testSetFileSizeMap() {
+        val extSizes: MutableMap<String, Long> = HashMap()
+        extSizes["pack"] = 1L
+        extSizes["idx"] = 2L
+        desc!!.setFileSizeMap(extSizes)
+        Assert.assertEquals(1, desc!!.getFileSize(PackExt.PACK))
+        Assert.assertEquals(2, desc!!.getFileSize(PackExt.INDEX))
+        Assert.assertEquals(0, desc!!.getFileSize(PackExt.BITMAP_INDEX))
     }
 
     @Test
-    public void testGetExtBits() throws Exception {
+    @Throws(Exception::class)
+    fun testGetExtBits() {
         // Prepare the desc object
-        desc.addFileExt(PackExt.PACK);
-        desc.addFileExt(PackExt.INDEX);
-
-        int bits = DescMapper.getExtBits(desc);
-        assertEquals(3, bits);
+        desc!!.addFileExt(PackExt.PACK)
+        desc!!.addFileExt(PackExt.INDEX)
+        val bits: Int = desc!!.getExtBits()
+        Assert.assertEquals(3, bits.toLong())
     }
 
     @Test
-    public void testSetExtsFromBit() throws Exception {
-        int bits = 3;
-        DescMapper.setExtsFromBits(desc, bits);
-        assertTrue(desc.hasFileExt(PackExt.PACK));
-        assertTrue(desc.hasFileExt(PackExt.INDEX));
-        assertFalse(desc.hasFileExt(PackExt.BITMAP_INDEX));
+    @Throws(Exception::class)
+    fun testSetExtsFromBit() {
+        val bits = 3
+        desc!!.setExtsFromBits(bits)
+        Assert.assertTrue(desc!!.hasFileExt(PackExt.PACK))
+        Assert.assertTrue(desc!!.hasFileExt(PackExt.INDEX))
+        Assert.assertFalse(desc!!.hasFileExt(PackExt.BITMAP_INDEX))
+    }
+
+    companion object {
+        private const val DESC_NAME = "testdesc"
     }
 }

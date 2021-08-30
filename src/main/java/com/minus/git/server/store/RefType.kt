@@ -14,26 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.benhumphreys.jgitcassandra.store;
+package com.minus.git.server.store
 
 /**
  * Maps reference types to ints.
  * Used for storage of the reference type (encoded as an int) in the refs
  * table.
  */
-public enum RefType {
-    SYMBOLIC(1),
-    PEELED_NONTAG(2),
-    PEELED_TAG(3),
-    UNPEELED(4);
+enum class RefType(val value: Int) {
+    SYMBOLIC(1), PEELED_NONTAG(2), PEELED_TAG(3), UNPEELED(4);
 
-    private final int value;
-
-    private RefType(int value) {
-        this.value = value;
-    }
-
-    public int getValue() {
-        return value;
-    }
 }
