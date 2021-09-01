@@ -1,0 +1,29 @@
+{"GET", "/HEAD$", get_head},
+{"GET", "/info/refs$", get_info_refs},
+{"GET", "/objects/info/alternates$", get_text_file},
+{"GET", "/objects/info/http-alternates$", get_text_file},
+{"GET", "/objects/info/packs$", get_info_packs},
+{"GET", "/objects/[0-9a-f]{2}/[0-9a-f]{38}$", get_loose_object},
+{"GET", "/objects/pack/pack-[0-9a-f]{40}\\.pack$", get_pack_file},
+{"GET", "/objects/pack/pack-[0-9a-f]{40}\\.idx$", get_idx_file},
+
+{"POST", "/git-upload-pack$", service_rpc},
+{"POST", "/git-receive-pack$", service_rpc}
+
+
+Server →GitHub Babel 2.0
+Content-Type →application/x-git-upload-pack-advertisement
+Transfer-Encoding →chunked
+Expires →Fri, 01 Jan 1980 00:00:00 GMT
+Pragma →no-cache
+Cache-Control →no-cache, max-age=0, must-revalidate
+Vary →Accept-Encoding
+X-GitHub-Request-Id →A72A:78E9:1E5B90:39B2E5:5CA073CB
+X-Frame-Options →DENY
+
+application/x-git-loose-object
+application/x-git-packed-objects
+application/x-git-packed-objects-toc
+application/x-git-%s-advertisement
+application/x-git-%s-request
+application/x-git-%s-result
