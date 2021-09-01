@@ -1,22 +1,6 @@
-/*
- * A Cassandra backend for JGit
- * Copyright 2014-2015 Ben Humphreys
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.minus.git.server.repo
+package com.minus.git.reactive.repo
 
-import com.minus.git.server.store.ObjStore
+import com.minus.git.reactive.repo.store.ObjStore
 import org.eclipse.jgit.internal.storage.dfs.DfsObjDatabase
 import org.eclipse.jgit.internal.storage.dfs.DfsOutputStream
 import org.eclipse.jgit.internal.storage.dfs.DfsPackDescription
@@ -28,29 +12,12 @@ import java.io.IOException
 import java.util.UUID
 
 internal class CassandraObjDatabase(repository: DfsRepository) : DfsObjDatabase(repository, DfsReaderOptions()) {
-    /**
-     * ObjStore object provides access to the Cassandra database
-     */
     private val objstore: ObjStore
 
-    /**
-     * Constructor
-     *
-     * @param repository a reference to the repository this ref database
-     * is associated with.
-     * @param conn       connection to the Cassandra data store.
-     */
     init {
-        objstore = ObjStore(repository.description.repositoryName, repository.description)
+        objstore = ObjStore(repository.keyspace, repository.description)
     }
 
-    /**
-     * Implementation of pack commit.
-     *
-     * @param desc     description of the new packs.
-     * @param replaces if not null, list of packs to remove.
-     * @throws IOException if the packs could not be committed
-     */
     @Throws(IOException::class)
     override fun commitPackImpl(desc: Collection<DfsPackDescription>, replaces: Collection<DfsPackDescription>?) {
         if (replaces != null && !replaces.isEmpty()) {
@@ -60,14 +27,7 @@ internal class CassandraObjDatabase(repository: DfsRepository) : DfsObjDatabase(
         objstore.insertDesc(desc)
     }
 
-    /**
-     * List the available pack files.
-     * The returned list supports random access and is mutable by the caller.
-     *
-     * @return available packs. May be empty if there are no packs.
-     * @throws java.io.IOException  if a list of packs could not be retrieved
-     * from the store
-     */
+
     @Throws(IOException::class)
     override fun listPacks(): List<DfsPackDescription> = objstore.listPacks()
 
@@ -81,11 +41,8 @@ internal class CassandraObjDatabase(repository: DfsRepository) : DfsObjDatabase(
      */
     @Throws(IOException::class)
     override fun newPack(source: PackSource): DfsPackDescription =
-        DfsPackDescription(
-            repository.description,
-            UUID.randomUUID().toString() + "-" + source.name,
-            source
-        ).apply { packSource = source }
+        DfsPackDescription(repository.description, UUID.randomUUID().toString() + "-" + source.name, source)
+    //.apply { packSource = source }
 
     /**
      * Rollback a pack creation.
@@ -124,5 +81,4 @@ internal class CassandraObjDatabase(repository: DfsRepository) : DfsObjDatabase(
     @Throws(IOException::class)
     override fun writeFile(desc: DfsPackDescription, ext: PackExt): DfsOutputStream =
         CassandraOutputStream(objstore, desc, ext)
-
 }

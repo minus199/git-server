@@ -14,9 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.minus.git.server.repo
+package com.minus.git.reactive.repo
 
-import com.minus.git.server.store.ObjStore
+import com.minus.git.reactive.repo.store.ObjStore
 import org.eclipse.jgit.internal.storage.dfs.DfsOutputStream
 import org.eclipse.jgit.internal.storage.dfs.DfsPackDescription
 import org.eclipse.jgit.internal.storage.pack.PackExt

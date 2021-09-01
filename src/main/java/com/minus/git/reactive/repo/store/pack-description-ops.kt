@@ -1,20 +1,4 @@
-/*
- * A Cassandra backend for JGit
- * Copyright 2014 Ben Humphreys
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.minus.git.server.store
+package com.minus.git.reactive.repo.store
 
 import com.datastax.oss.driver.api.core.cql.Row
 import org.eclipse.jgit.internal.storage.dfs.DfsObjDatabase
@@ -33,16 +17,15 @@ import org.eclipse.jgit.internal.storage.pack.PackExt
  * @param desc
  * @return a map mapping extension strings to file sizes
  */
-fun DfsPackDescription.computeFileSizeMap(): Map<String, Long> {
-    val sizeMap: MutableMap<String, Long> = HashMap()
-    for (ext in PackExt.values()) {
-        val sz = getFileSize(ext)
-        if (sz > 0) {
-            sizeMap[ext.extension] = sz
+fun DfsPackDescription.computeFileSizeMap(): Map<String, Long> =
+    PackExt.values()
+        .fold(HashMap<String, Long>()) { acc, ext ->
+            getFileSize(ext).let {
+                if (it > 0) acc[ext.extension] = it
+            }
+
+            acc
         }
-    }
-    return sizeMap
-}
 
 /**
  * Given a map of extension/size, add each to the pack description.
@@ -88,11 +71,9 @@ fun DfsPackDescription.getExtBits(): Int {
  * @param bits  the bit field to read from
  */
 fun DfsPackDescription.setExtsFromBits(bits: Int) {
-    for (ext in PackExt.values()) {
-        if (ext.bit and bits != 0) {
-            addFileExt(ext)
-        }
-    }
+    PackExt.values()
+        .filter { it.bit and bits != 0 }
+        .forEach { addFileExt(it) }
 }
 
 /**
@@ -114,6 +95,7 @@ fun Row.toPackDescription(repoDesc: DfsRepositoryDescription): DfsPackDescriptio
  * The PackExt class defines a number of static instances
  */
 private fun String.lookupExt(): PackExt {
+//            PackExt.values().find { it.extension == extStr } ?: PackExt.newPackExt(extStr)
     for (ext in PackExt.values()) {
         if (ext.extension == this) {
             return ext
