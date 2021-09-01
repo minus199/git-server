@@ -1,4 +1,4 @@
-package com.minus.git.server
+package com.minus.git.reactive
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
