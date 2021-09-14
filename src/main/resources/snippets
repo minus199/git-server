@@ -1,0 +1,6 @@
+# clone with cert
+GIT_SSL_CAINFO=~/workspace/jgit-cassandra/src/main/resources/certs/root-ca/ca.pem \
+    git clone https://localhost:6480/abcd6.git
+
+# curl with cert
+curl --cacert certs/root-ca/ca.pem -v --http2 -v --output foo https://localhost:6480/abcd6.git/info/refs?service=git-upload-pack

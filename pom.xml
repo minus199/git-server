@@ -21,22 +21,29 @@
         <cassandra.version>4.13.0</cassandra.version>
         <slf4j.version>2.0.0-alpha4</slf4j.version>
         <kotlinx-coroutines.version>1.5.1</kotlinx-coroutines.version>
+        <spring.version>2.5.4</spring.version>
     </properties>
 
     <dependencies>
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-starter-data-cassandra-reactive</artifactId>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
+            <version>${spring.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
+            <version>${spring.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-undertow</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+        <!--        <dependency>-->
+        <!--            <groupId>org.springframework.boot</groupId>-->
+        <!--            <artifactId>spring-boot-starter-data-cassandra-reactive</artifactId>-->
+        <!--        </dependency>-->
         <!--        <dependency>-->
         <!--            <groupId>org.springframework.data</groupId>-->
         <!--            <artifactId>spring-data-cassandra</artifactId>-->
@@ -96,23 +103,41 @@
             <version>3.0.1</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>${slf4j.version}</version>
-            <scope>runtime</scope>
-        </dependency>
 
+        <!--        logging -->
         <dependency>
             <groupId>io.github.microutils</groupId>
             <artifactId>kotlin-logging-jvm</artifactId>
             <version>2.0.11</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
+            <version>2.14.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>2.14.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.14.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>2.0.0-alpha4</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk15on</artifactId>
+            <version>1.69</version>
+        </dependency>
+
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -141,6 +166,7 @@
 
     <build>
         <plugins>
+
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -160,11 +186,11 @@
                     </archive>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.10.1</version>
-            </plugin>
+            <!--            <plugin>-->
+            <!--                <groupId>org.apache.maven.plugins</groupId>-->
+            <!--                <artifactId>maven-javadoc-plugin</artifactId>-->
+            <!--                <version>2.10.1</version>-->
+            <!--            </plugin>-->
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>
@@ -212,6 +238,17 @@
                 <configuration>
                     <source>11</source>
                     <target>11</target>
+                    <!--                    <release combine.self="override"></release>-->
+                    <!--                    <compilerArgs>-->
+                    <!--                        <arg>&#45;&#45;add-exports</arg>-->
+                    <!--                        <arg>java.base/sun.security.x509=ALL-UNNAMED</arg>-->
+                    <!--                        <arg>&#45;&#45;add-exports</arg>-->
+                    <!--                        <arg>java.base/sun.security.provider=ALL-UNNAMED</arg>-->
+                    <!--                        <arg>&#45;&#45;add-exports</arg>-->
+                    <!--                        <arg>java.base/sun.security.pkcs=ALL-UNNAMED</arg>-->
+                    <!--                        <arg>&#45;&#45;add-exports</arg>-->
+                    <!--                        <arg>java.base/sun.security.util=ALL-UNNAMED</arg>-->
+                    <!--                    </compilerArgs>-->
                 </configuration>
             </plugin>
         </plugins>
