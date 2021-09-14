@@ -1,4 +1,4 @@
-package com.minus.git.reactive.http.git.packs
+package com.minus.git.reactive.backend
 
 import org.eclipse.jgit.transport.PacketLineIn
 import org.eclipse.jgit.transport.PacketLineOut

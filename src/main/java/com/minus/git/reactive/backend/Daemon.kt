@@ -1,6 +1,7 @@
 package com.minus.git.reactive.backend
 
 
+import com.minus.git.reactive.GitV1Enabled
 import org.eclipse.jgit.errors.RepositoryNotFoundException
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.transport.ServiceMayNotContinueException
@@ -8,16 +9,17 @@ import org.eclipse.jgit.transport.resolver.RepositoryResolver
 import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException
 import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException
 import org.springframework.stereotype.Component
-import java.io.IOException
+import org.springframework.web.reactive.function.server.ServerRequest
 import java.net.Socket
 
+@GitV1Enabled
 @Component
 open class Daemon(
-    private val repositoryResolver: RepositoryResolver<ProtocolServiceExecutor?>,
+    private val repositoryResolver: RepositoryResolver<ServerRequest>,
     private val services: SupportedServices
 ) {
     internal fun startClient(socket: Socket) {
-        ProtocolServiceExecutor(this, socket).use {
+        /*ProtocolServiceExecutor(this, socket).use {
             try {
                 it.executeService()
             } catch (e: ServiceNotEnabledException) {
@@ -27,20 +29,13 @@ open class Daemon(
             } catch (e: IOException) {
                 // Ignore unexpected IO exceptions from clients
             }
-        }
+        }*/
     }
 
     @Throws(ServiceMayNotContinueException::class)
-    internal fun openRepository(client: ProtocolServiceExecutor, name: String): Repository? {
-        // Assume any attempt to use \ was by a Windows client and correct to the more typical / used in Git URIs.
-        val sanitizedName = name.replace('\\', '/')
-
-        // git://thishost/path should always be name="/path" here
-        if (!sanitizedName.startsWith("/"))
-            return null
-
+    internal fun openRepository(client: ServerRequest, name: String): Repository? {
         return try {
-            repositoryResolver.open(client, sanitizedName.substring(1))
+            repositoryResolver.open(client, name)
         } catch (e: RepositoryNotFoundException) {
             // null signals it "wasn't found", which is all that is suitable
             // for the remote client to know.
