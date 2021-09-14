@@ -2,12 +2,15 @@ package com.minus.git.reactive.repo
 
 import com.minus.git.reactive.service.DatabaseSessionOps
 import com.minus.git.reactive.repo.store.Tables
+import mu.KotlinLogging
 import org.eclipse.jgit.internal.storage.dfs.DfsObjDatabase
 import org.eclipse.jgit.internal.storage.dfs.DfsRefDatabase
 import org.eclipse.jgit.internal.storage.dfs.DfsRepository
 import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryBuilder
 import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription
 import java.io.IOException
+
+private val logger = KotlinLogging.logger {}
 
 class CassandraGitRepository(repoDesc: DfsRepositoryDescription?) :
     DfsRepository(object : DfsRepositoryBuilder<DfsRepositoryBuilder<*, *>?, CassandraGitRepository>() {
@@ -28,6 +31,7 @@ class CassandraGitRepository(repoDesc: DfsRepositoryDescription?) :
         ensureSchemas()
         objdb = CassandraObjDatabase(this)
         refdb = CassandraRefDatabase(this)
+        logger.info { "Loaded repo ${description.repositoryName}" }
     }
 
     override fun getObjectDatabase(): DfsObjDatabase {

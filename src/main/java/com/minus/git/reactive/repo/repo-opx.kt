@@ -1,17 +1,22 @@
 package com.minus.git.reactive.repo
 
+import com.minus.git.reactive.backend.ProtocolService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withContext
 import org.eclipse.jgit.internal.storage.dfs.DfsRepository
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.ObjectLoader
+import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.treewalk.TreeWalk
 import java.io.ByteArrayOutputStream
 import java.util.Locale
 import java.util.regex.Pattern
 
+fun Repository.isEnabledFor(service: ProtocolService): Boolean {
+    return if (service.isOverridable) config.get(service.configKey).enabled else service.isEnabled
+}
 
 /** Sanitize repo name */
 fun String.sanitize(): String {
