@@ -1,7 +1,8 @@
-package com.minus.git.reactive.backend
+package com.minus.git.reactive.http
 
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.minus.git.reactive.ReactiveEnabled
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.socket.WebSocketHandler
 import org.springframework.web.reactive.socket.WebSocketSession
@@ -14,8 +15,9 @@ import java.util.function.BiFunction
 
 data class WebsocketEvent(val id: String, val dt: String)
 
+@ReactiveEnabled
 @Component
-class ReactiveGitWebSocketHandler : WebSocketHandler {
+class ReactiveGitWebSocketHandler(private val json: ObjectMapper) : WebSocketHandler {
     private val eventFlux = Flux.generate<String> { sink ->
         val event = WebsocketEvent(randomUUID().toString(), now().toString())
         try {
@@ -34,7 +36,4 @@ class ReactiveGitWebSocketHandler : WebSocketHandler {
             .log()
     }
 
-    companion object {
-        private val json = ObjectMapper()
-    }
 }

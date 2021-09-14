@@ -14,12 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.minus.git.server.store
+package com.minus.git.reactive.store
 
+import com.minus.git.reactive.repo.store.computeFileSizeMap
+import com.minus.git.reactive.repo.store.getExtBits
+import com.minus.git.reactive.repo.store.setExtsFromBits
+import com.minus.git.reactive.repo.store.setFileSizeMap
 import org.eclipse.jgit.internal.storage.dfs.DfsPackDescription
 import kotlin.Throws
 import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription
-import com.minus.git.server.store.DescMapperTest
 import org.eclipse.jgit.internal.storage.dfs.DfsObjDatabase
 import org.eclipse.jgit.internal.storage.pack.PackExt
 import org.junit.After
