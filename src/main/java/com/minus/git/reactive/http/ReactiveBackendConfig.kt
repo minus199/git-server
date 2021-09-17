@@ -4,12 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.minus.git.reactive.ReactiveEnabled
 import io.undertow.UndertowOptions
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.boot.web.embedded.netty.NettyReactiveWebServerFactory
 import org.springframework.boot.web.embedded.undertow.UndertowReactiveWebServerFactory
 import org.springframework.boot.web.server.Compression
-import org.springframework.boot.web.server.Http2
-import org.springframework.boot.web.server.Ssl
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
@@ -29,6 +25,8 @@ import org.springframework.web.reactive.socket.server.support.WebSocketHandlerAd
 import reactor.core.publisher.Mono
 import javax.net.ssl.SSLContext
 
+
+private const val NULL_CHAR = '\u0000'
 
 @ReactiveEnabled
 @Configuration
@@ -59,27 +57,19 @@ open class ReactiveBackendConfig(
     @Bean
     open fun reactorServerResourceFactory(): ReactorResourceFactory = ReactorResourceFactory()
 
+
     @Bean
-    open fun embeddedServletContainerFactory(
-        httpHandler: HttpHandler,
-        javaxSslContext: SSLContext
-    ): UndertowReactiveWebServerFactory? {
+    open fun serverFactory(httpHandler: HttpHandler, javaxSslContext: SSLContext): UndertowReactiveWebServerFactory {
         val factory = UndertowReactiveWebServerFactory().apply {
-//            http2 = Http2().apply { isEnabled = true }
-            compression = Compression().apply { enabled = false }
+            compression = Compression().apply { enabled = true }
 
             addBuilderCustomizers({
                 it
                     .setServerOption(UndertowOptions.ENABLE_HTTP2, true)
                     .setServerOption(UndertowOptions.HTTP2_SETTINGS_ENABLE_PUSH, true)
                     .addHttpsListener(6480, "localhost", javaxSslContext)
-            })
 
-//            ssl = Ssl().apply {
-//                isEnabled = true
-//                keyStore = "classpath:certs/server/server.jks"
-//                keyStorePassword = "secret"
-//            }
+            })
 
             CorsRegistry().apply {
                 addMapping("*")
@@ -90,31 +80,7 @@ open class ReactiveBackendConfig(
             getWebServer(httpHandler)
         }
 
-
         return factory
-    }
-
-    //    @Bean
-    open fun nettyReactiveWebServerFactory(
-        httpHandler: HttpHandler,
-        @Qualifier("reactorServerResourceFactory") resourceFactory: ReactorResourceFactory
-    ): NettyReactiveWebServerFactory = NettyReactiveWebServerFactory().apply {
-        port = 6480
-        compression = Compression().apply { enabled = false }
-        http2 = Http2().apply { isEnabled = true }
-        ssl = Ssl().apply {
-            isEnabled = true
-            keyStore = "classpath:certs/server/server.jks"
-            keyStorePassword = "secret"
-        }
-
-        CorsRegistry().apply {
-            addMapping("*")
-            addCorsMappings(this)
-        }
-
-        //        setResourceFactory(resourceFactory)
-        getWebServer(httpHandler)
     }
 
     @Bean
