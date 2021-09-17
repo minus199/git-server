@@ -28,12 +28,11 @@ class ReactiveGitWebSocketHandler(private val json: ObjectMapper) : WebSocketHan
     }
 
     private val intervalFlux = Flux.interval(Duration.ofMillis(1000L))
-        .zipWith(eventFlux, BiFunction { time: Long, event: String -> event })
+        .zipWith(eventFlux) { _: Long, event: String -> event }
 
     override fun handle(webSocketSession: WebSocketSession): Mono<Void> {
         return webSocketSession.send(intervalFlux.map { webSocketSession.textMessage(it) })
-            .and(webSocketSession.receive().map<String> { it.payloadAsText })
+            .and(webSocketSession.receive().map { it.payloadAsText })
             .log()
     }
-
 }

@@ -4,37 +4,32 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.minus.git.reactive.ReactiveEnabled
 import io.undertow.UndertowOptions
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.web.embedded.undertow.UndertowReactiveWebServerFactory
 import org.springframework.boot.web.server.Compression
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.core.Ordered
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.client.reactive.ReactorResourceFactory
 import org.springframework.http.server.reactive.HttpHandler
-import org.springframework.web.reactive.HandlerMapping
 import org.springframework.web.reactive.config.CorsRegistry
 import org.springframework.web.reactive.config.EnableWebFlux
 import org.springframework.web.reactive.config.WebFluxConfigurer
 import org.springframework.web.reactive.function.server.HandlerStrategies
 import org.springframework.web.reactive.function.server.RouterFunctions
-import org.springframework.web.reactive.handler.SimpleUrlHandlerMapping
-import org.springframework.web.reactive.socket.WebSocketHandler
-import org.springframework.web.reactive.socket.server.support.WebSocketHandlerAdapter
 import reactor.core.publisher.Mono
 import javax.net.ssl.SSLContext
-
-
-private const val NULL_CHAR = '\u0000'
 
 @ReactiveEnabled
 @Configuration
 @EnableWebFlux
 open class ReactiveBackendConfig(
-    private val gitWsHandler: ReactiveGitWebSocketHandler,
-    private val jackson: ObjectMapper
+    private val jackson: ObjectMapper,
+    @Value("\${gradify.git.server.host}") private val serverHost: String,
+    @Value("\${gradify.git.server.port}") private val serverPort: Int
 ) : WebFluxConfigurer {
+
     @Bean
     open fun gitHttpWebHandler(@Autowired routes: Routes): HttpHandler =
         HandlerStrategies.builder()
@@ -57,7 +52,6 @@ open class ReactiveBackendConfig(
     @Bean
     open fun reactorServerResourceFactory(): ReactorResourceFactory = ReactorResourceFactory()
 
-
     @Bean
     open fun serverFactory(httpHandler: HttpHandler, javaxSslContext: SSLContext): UndertowReactiveWebServerFactory {
         val factory = UndertowReactiveWebServerFactory().apply {
@@ -67,8 +61,7 @@ open class ReactiveBackendConfig(
                 it
                     .setServerOption(UndertowOptions.ENABLE_HTTP2, true)
                     .setServerOption(UndertowOptions.HTTP2_SETTINGS_ENABLE_PUSH, true)
-                    .addHttpsListener(6480, "localhost", javaxSslContext)
-
+                    .addHttpsListener(serverPort, serverHost, javaxSslContext)
             })
 
             CorsRegistry().apply {
@@ -83,14 +76,4 @@ open class ReactiveBackendConfig(
         return factory
     }
 
-    @Bean
-    open fun webSocketHandlerMapping(): HandlerMapping = SimpleUrlHandlerMapping().apply {
-        order = Ordered.HIGHEST_PRECEDENCE
-        urlMap = mapOf<String, WebSocketHandler>("/foo-socket" to gitWsHandler)
-    }
-
-    @Bean
-    open fun webSocketHandlerAdapter(): WebSocketHandlerAdapter = WebSocketHandlerAdapter().apply {
-        order = Ordered.HIGHEST_PRECEDENCE
-    }
 }
