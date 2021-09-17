@@ -1,0 +1,50 @@
+
+
+                        val payload = arrayOf(
+                            "# service=git-upload-pack$NULL_CHAR",
+                            """95dcfa3633004da0049d3d0fa03f80589cbcaf31 refs/heads/maint${NULL_CHAR}multi_ack""",
+                            """d049f6c27a2244e12041955e262a404c7faba355 refs/heads/master""",
+                            """2cb58b79488a98d2721cea644875a8dd0026b115 refs/tags/v1.0""",
+                            """a3c2e2402b99163d1d59756e5f207ae21cccba4c refs/tags/v1.0^{}$NULL_CHAR"""
+                        ).map { line ->
+                            if (line == "NULL_CHAR") "$NULL_CHAR"
+                            else (line.length + 4 + 1)
+                                .toString(16)
+                                .padStart(4, '0')
+                                .let { hex -> "$hex$line\n" }
+                        }
+                            .joinToString("")
+
+                        exchange.statusCode = 200
+                        exchange.responseHeaders.add(
+                            HttpString("content-type"),
+                            GitPushHandler.X_GIT_UPLOAD_PACK_ADVERTISEMENT.toString()
+                        )
+
+//                        exchange.connection.pu
+                        exchange.responseChannel.write(payload.toByteArray().let { bytes -> ByteBuffer.wrap(bytes) })
+//                        exchange.responseChannel.flush()
+//                        exchange.responseChannel.resumeWrites()
+
+                        exchange.requestReceiver.receivePartialString(Receiver.PartialStringCallback { exchange, message, last ->
+                            println()
+                        })
+//                        val x = ByteBuffer.allocate(1024)
+
+//exchange.requestChannel.read(x)
+//                        exchange.responseSender.send(payload)
+                        println()
+//                        return exchange.getResponse().writeWith(Flux.just(buffer))
+//
+////req.exchange().request.body.subscribe { println(it) }
+//        val buff = exchange.responseChannel.write(contentBody)
+//
+//
+//                        val x = ByteBuffer.allocate(1024).run {
+//                            exchange.requestChannel.read(this)
+//                        }
+//                        println(
+//                            exchange.requestURI
+//                        )
+
+                    }*/

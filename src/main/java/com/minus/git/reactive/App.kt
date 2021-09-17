@@ -4,6 +4,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.PropertySource
 import org.springframework.context.annotation.PropertySources
+import reactor.tools.agent.ReactorDebugAgent
 
 
 @PropertySources(
