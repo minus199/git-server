@@ -1,10 +1,7 @@
 package com.minus.git.reactive.repo.store
 
 import com.datastax.oss.driver.api.core.cql.Row
-import com.datastax.oss.driver.api.querybuilder.QueryBuilder.deleteFrom
-import com.datastax.oss.driver.api.querybuilder.QueryBuilder.insertInto
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal
-import com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom
 import com.minus.git.reactive.repo.compareObjId
 import com.minus.git.reactive.service.DatabaseSessionOps
 import org.eclipse.jgit.lib.ObjectId
@@ -19,10 +16,9 @@ enum class RefType(val value: Int) {
     SYMBOLIC(1), PEELED_NONTAG(2), PEELED_TAG(3), UNPEELED(4);
 }
 
-class RefStore(private val keyspace: String) : DatabaseSessionOps {
-    @Throws(IOException::class)
+class RefStore(override val keyspace: String) : DatabaseSessionOps {
     operator fun get(name: String): Ref? {
-        val results = selectFrom(keyspace, Tables.PACK_DESC.dbName)
+        val results = Tables.PACK_DESC.select()
             .all()
             .whereColumn("name")
             .isEqualTo(literal(name))
@@ -35,11 +31,10 @@ class RefStore(private val keyspace: String) : DatabaseSessionOps {
     }
 
     @Throws(IOException::class)
-    fun values(): Collection<Ref?> = selectFrom(keyspace, Tables.REFS.dbName)
+    fun values(): Collection<Ref?> = Tables.REFS.select()
         .all()
         .build()
-        .execute()
-        .map { row -> rowToRef(row) }
+        .execute { row: Row -> rowToRef(row) }
         .toList()
 
     @Throws(IOException::class)
@@ -112,7 +107,7 @@ class RefStore(private val keyspace: String) : DatabaseSessionOps {
 
     @Throws(IOException::class)
     private fun putRow(name: String, type: RefType, value: String, auxValue: String) {
-        insertInto(keyspace, Tables.REFS.dbName)
+        Tables.REFS.insert()
             .value("name", literal(name))
             .value("type", literal(type.value))
             .value("value", literal(value))
@@ -123,7 +118,7 @@ class RefStore(private val keyspace: String) : DatabaseSessionOps {
 
     @Throws(IOException::class)
     private fun removeRef(name: String) {
-        deleteFrom(keyspace, Tables.REFS.dbName)
+        Tables.REFS.delete()
             .whereColumn("name").isEqualTo(literal(name))
             .build()
             .execute()

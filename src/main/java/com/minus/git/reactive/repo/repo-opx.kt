@@ -10,6 +10,7 @@ import org.eclipse.jgit.lib.ObjectLoader
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.treewalk.TreeWalk
+import reactor.core.publisher.Mono
 import java.io.ByteArrayOutputStream
 import java.util.Locale
 import java.util.regex.Pattern
@@ -19,14 +20,14 @@ fun Repository.isEnabledFor(service: ProtocolService): Boolean {
 }
 
 /** Sanitize repo name */
-fun String.sanitize(): String {
+fun String.sanitize(): Mono<String> {
     var str = lowercase(Locale.getDefault()).trim { it <= ' ' }
     val idx = str.indexOf(".git")
     str = if (idx >= 0) str.substring(0, idx) else str
     val p = Pattern.compile("^[a-zA-Z0-9-_]+$")
     val m = p.matcher(str)
     return if (m.matches()) {
-        str
+        Mono.just(str)
     } else {
         throw IllegalArgumentException("Invalid name: $this")
     }
@@ -44,7 +45,7 @@ suspend fun DfsRepository.walk(): Sequence<ByteArrayOutputStream> {
             commit.mapCatching { addTree(commit.getOrThrow()) }
         }
 
-    return sequence<ByteArrayOutputStream> {
+    return sequence {
         while (treeWalk.next()) {
             val out = ByteArrayOutputStream()
             val objectId = treeWalk.getObjectId(0)

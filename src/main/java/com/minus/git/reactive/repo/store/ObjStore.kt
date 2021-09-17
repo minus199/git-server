@@ -13,11 +13,11 @@ import org.eclipse.jgit.internal.storage.pack.PackExt
 import java.io.IOException
 import java.nio.ByteBuffer
 
-class ObjStore(private val keyspace: String, private val repoDesc: DfsRepositoryDescription) : DatabaseSessionOps {
+class ObjStore(override val keyspace: String, private val repoDesc: DfsRepositoryDescription) : DatabaseSessionOps {
     @Throws(IOException::class)
     fun insertDesc(packDescriptions: Collection<DfsPackDescription>) {
         packDescriptions.fold(BatchStatement.builder(BatchType.LOGGED)) { builder, packDescription ->
-            insertInto(keyspace, Tables.PACK_DESC.dbName)
+            Tables.PACK_DESC.insert()
                 .value("name", literal(packDescription.toString()))
                 .value("source", literal(packDescription.packSource.ordinal))
                 .value("last_modified", literal(packDescription.lastModified))
@@ -41,7 +41,7 @@ class ObjStore(private val keyspace: String, private val repoDesc: DfsRepository
     @Throws(IOException::class)
     fun removeDesc(desc: Collection<DfsPackDescription>) {
         for (pd in desc) {
-            deleteFrom(keyspace, Tables.PACK_DESC.dbName)
+            Tables.PACK_DESC.delete()
                 .whereColumn("name").isEqualTo(literal(pd.toString()))
                 .build()
                 .execute()
@@ -49,7 +49,7 @@ class ObjStore(private val keyspace: String, private val repoDesc: DfsRepository
     }
 
     @Throws(IOException::class)
-    fun listPacks(): List<DfsPackDescription> = selectFrom(keyspace, Tables.PACK_DESC.dbName)
+    fun listPacks(): List<DfsPackDescription> = Tables.PACK_DESC.select()
         .all()
         .build()
         .execute()
@@ -68,7 +68,7 @@ class ObjStore(private val keyspace: String, private val repoDesc: DfsRepository
      */
     @Throws(IOException::class)
     fun readFile(desc: DfsPackDescription, ext: PackExt?): ByteBuffer {
-        val results = selectFrom(keyspace, Tables.PACK_DATA.dbName)
+        val results = Tables.PACK_DATA.select()
             .all()
             .whereColumn("name")
             .isEqualTo(literal(desc.getFileName(ext)))
@@ -82,11 +82,11 @@ class ObjStore(private val keyspace: String, private val repoDesc: DfsRepository
     }
 
     /**
-     * Overwrites the file given by the pair "desc" and "ext" witht the data in the "data" ByteArray.
+     * Overwrites the file given by the pair "desc" and "ext" with the data in the "data" ByteArray.
      */
     @Throws(IOException::class)
     fun writeFile(desc: DfsPackDescription, ext: PackExt?, data: ByteBuffer?) {
-        insertInto(keyspace, Tables.PACK_DATA.dbName)
+        Tables.PACK_DATA.insert()
             .value("name", literal(desc.getFileName(ext)))
             .value("data", literal(data))
             .build()

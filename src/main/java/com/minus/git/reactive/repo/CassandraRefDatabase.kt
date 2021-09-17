@@ -51,8 +51,4 @@ internal class CassandraRefDatabase(repository: DfsRepository) : DfsRefDatabase(
         sym.sort()
         return RefCache(ids.toRefList(), sym.toRefList())
     }
-
-    override fun getRefs(): MutableList<Ref> {
-        return super.getRefs()
-    }
 }

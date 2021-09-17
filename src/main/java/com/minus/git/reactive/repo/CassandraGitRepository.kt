@@ -1,7 +1,7 @@
 package com.minus.git.reactive.repo
 
-import com.minus.git.reactive.service.DatabaseSessionOps
 import com.minus.git.reactive.repo.store.Tables
+import com.minus.git.reactive.service.DatabaseSessionOps
 import mu.KotlinLogging
 import org.eclipse.jgit.internal.storage.dfs.DfsObjDatabase
 import org.eclipse.jgit.internal.storage.dfs.DfsRefDatabase
@@ -34,21 +34,19 @@ class CassandraGitRepository(repoDesc: DfsRepositoryDescription?) :
         logger.info { "Loaded repo ${description.repositoryName}" }
     }
 
-    override fun getObjectDatabase(): DfsObjDatabase {
-        return objdb
-    }
+    override val keyspace: String
+        get() = "repository_${description.repositoryName}"
 
-    override fun getRefDatabase(): DfsRefDatabase {
-        return refdb
-    }
+    override fun getObjectDatabase(): DfsObjDatabase = objdb
+
+    override fun getRefDatabase(): DfsRefDatabase = refdb
 
     private fun ensureSchemas() {
         arrayOf(
             "CREATE KEYSPACE IF NOT EXISTS $keyspace WITH replication = {'class':'SimpleStrategy', 'replication_factor':1};",
-            "CREATE TABLE IF NOT EXISTS $keyspace.${Tables.PACK_DESC.dbName} (name varchar PRIMARY KEY, source int, last_modified bigint, size_map map<text, bigint>, object_count bigint, delta_count bigint, extensions int, index_version int);",
-            "CREATE TABLE IF NOT EXISTS $keyspace.${Tables.PACK_DATA.dbName} (name varchar PRIMARY KEY, data blob);",
-            "CREATE KEYSPACE IF NOT EXISTS $keyspace WITH replication = {'class':'SimpleStrategy', 'replication_factor':1};",
-            "CREATE TABLE IF NOT EXISTS $keyspace.${Tables.REFS.dbName} (name varchar PRIMARY KEY, type int, value varchar, aux_value varchar);",
+            "CREATE TABLE IF NOT EXISTS $keyspace.${Tables.PACK_DESC.tableName} (name varchar PRIMARY KEY, source int, last_modified bigint, size_map map<text, bigint>, object_count bigint, delta_count bigint, extensions int, index_version int);",
+            "CREATE TABLE IF NOT EXISTS $keyspace.${Tables.PACK_DATA.tableName} (name varchar PRIMARY KEY, data blob);",
+            "CREATE TABLE IF NOT EXISTS $keyspace.${Tables.REFS.tableName} (name varchar PRIMARY KEY, type int, value varchar, aux_value varchar);",
         ).map { it.execute() }
     }
 }

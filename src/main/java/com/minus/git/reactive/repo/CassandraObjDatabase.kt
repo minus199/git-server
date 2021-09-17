@@ -42,7 +42,7 @@ internal class CassandraObjDatabase(repository: DfsRepository) : DfsObjDatabase(
     @Throws(IOException::class)
     override fun newPack(source: PackSource): DfsPackDescription =
         DfsPackDescription(repository.description, UUID.randomUUID().toString() + "-" + source.name, source)
-    //.apply { packSource = source }
+    .apply { packSource = source } //todo: find out why it was commented
 
     /**
      * Rollback a pack creation.
