@@ -14,6 +14,18 @@ import java.io.InputStream
 import java.io.OutputStream
 
 
+@Component
+class SupportedServices(private val services: Array<ProtocolService>) {
+    @Synchronized
+    fun match(cmd: String) = services.find { it.run { cmd.canHandleCmd() } }
+
+    @Synchronized
+    fun getService(name: String): ProtocolService? {
+        val serviceName = if (!name.startsWith("git-")) "git-$name" else name
+        return services.find { it.commandName == serviceName }
+    }
+}
+
 abstract class ProtocolService internal constructor(cmdName: String, cfgName: String) {
     val commandName: String = if (cmdName.startsWith("git-")) cmdName else "git-$cmdName"
     open val isEnabled: Boolean
@@ -41,42 +53,6 @@ abstract class ProtocolService internal constructor(cmdName: String, cfgName: St
         inputStream: InputStream,
         outputStream: OutputStream
     )
-
-
-//    @Throws(IOException::class, ServiceNotEnabledException::class, ServiceNotAuthorizedException::class)
-//    internal fun execut2e(req: ServerRequest, extraParams: Map<String, String>?) {
-//
-//
-//
-//
-//        try {
-//            serviceExecutor.daemon.openRepository(serviceExecutor, req.repoName).use { repository ->
-//                if (repository!!.isEnabledFor(this)) {
-////                    if (extraParameters != null) {
-//                    serviceExecutor.execute(repository, extraParams)
-////                    }
-//                }
-//            }
-//        } catch (e: ServiceMayNotContinueException) {
-//            // An error when opening the repo means the serviceExecutor is expecting a ref
-//            // advertisement, so use that style of error.
-//            PacketLineOut(serviceExecutor.outputStream).run {
-//                writeString("ERR " + e.cause?.message + "\n")
-//            }
-//        }
-//    }
-}
-
-@Component
-class SupportedServices(private val services: Array<ProtocolService>) {
-    @Synchronized
-    fun match(cmd: String) = services.find { it.run { cmd.canHandleCmd() } }
-
-    @Synchronized
-    fun getService(name: String): ProtocolService? {
-        val serviceName = if (!name.startsWith("git-")) "git-$name" else name
-        return services.find { it.commandName == serviceName }
-    }
 }
 
 @Component
