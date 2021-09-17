@@ -1,4 +1,4 @@
-package com.minus.git.reactive.http
+package com.minus.git.reactive.http2
 
 import io.netty.handler.codec.http2.Http2SecurityUtil
 import io.netty.handler.ssl.ApplicationProtocolConfig
@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.io.ResourceLoader
 
-//@Configuration
+@Configuration
 open class HttpConfig {
     @Bean
     open fun sslContext(resourceLoader: ResourceLoader): SslContext {
