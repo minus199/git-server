@@ -5,16 +5,6 @@ import java.io.InputStream
 
 private const val NULL_CHAR = "\u0000"
 
-//GET /abcd3/info/refs?service=git-receive-pack HTTP/1.1
-//Host: localhost:9045
-//User-Agent: git/2.25.1
-//Accept: */*
-//Accept-Encoding: deflate, gzip, br
-//Accept-Language: en-IL, en;q=0.9, *;q=0.8
-//Pragma: no-cache
-//
-
-
 class GitHttpRequest(private val inputStream: InputStream) {
     val cmd: String
     val headers: Map<String, String>

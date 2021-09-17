@@ -1,6 +1,5 @@
 package com.minus.git.reactive.backend
 
-import com.minus.git.reactive.GitV1Enabled
 import com.minus.git.reactive.ReactiveEnabled
 import org.eclipse.jgit.lib.Config
 import org.eclipse.jgit.lib.Repository
@@ -11,6 +10,8 @@ import org.eclipse.jgit.transport.resolver.UploadPackFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.ServerRequest
 import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 
 
 abstract class ProtocolService internal constructor(cmdName: String, cfgName: String) {
@@ -33,7 +34,13 @@ abstract class ProtocolService internal constructor(cmdName: String, cfgName: St
     fun String.canHandleCmd(): Boolean = commandName == this
 
     @Throws(IOException::class, ServiceNotEnabledException::class, ServiceNotAuthorizedException::class)
-    internal abstract fun execute(request: ServerRequest, repo: Repository, extraParameters: Collection<String>)
+    internal abstract fun execute(
+        request: ServerRequest,
+        repo: Repository,
+        extraParameters: Collection<String>,
+        inputStream: InputStream,
+        outputStream: OutputStream
+    )
 
 
 //    @Throws(IOException::class, ServiceNotEnabledException::class, ServiceNotAuthorizedException::class)
@@ -79,9 +86,13 @@ class ReceivePackProtocolService(private val receivePackFactory: ReceivePackFact
     override val isEnabled
         get() = true
 
-    override fun execute(request: ServerRequest, repo: Repository, extraParameters: Collection<String>) {
-//        receivePackFactory.create(request, repo).receive(inputStream, outputStream, null)
-    }
+    override fun execute(
+        request: ServerRequest,
+        repo: Repository,
+        extraParameters: Collection<String>,
+        inputStream: InputStream,
+        outputStream: OutputStream
+    ) = receivePackFactory.create(request, repo).receive(inputStream, outputStream, null)
 }
 
 @Component
@@ -91,9 +102,14 @@ class UploadPackProtocolService(private val uploadPackFactory: UploadPackFactory
     override val isEnabled
         get() = true
 
-    override fun execute(request: ServerRequest, repo: Repository, extraParameters: Collection<String>) {
-        uploadPackFactory.create(request, repo).apply {
-            setExtraParameters(extraParameters)
-        }//.upload(inputStream, outputStream, null)
-    }
+    override fun execute(
+        request: ServerRequest,
+        repo: Repository,
+        extraParameters: Collection<String>,
+        inputStream: InputStream,
+        outputStream: OutputStream
+    ) = uploadPackFactory
+        .create(request, repo)
+        .apply { setExtraParameters(extraParameters) }
+        .upload(inputStream, outputStream, null)
 }
