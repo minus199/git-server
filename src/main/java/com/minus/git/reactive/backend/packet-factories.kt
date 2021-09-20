@@ -25,6 +25,7 @@ class ReactiveReceivePack(repo: Repository, val host: String = "localhost", val 
     override fun receive(input: InputStream?, output: OutputStream?, messages: OutputStream?) {
         super.receive(input, output, messages)
     }
+
 }
 
 @ReactiveEnabled
@@ -35,7 +36,7 @@ class ReactiveUploadPackFactory : UploadPackFactory<ServerRequest> {
 
     @Throws(ServiceNotEnabledException::class, ServiceNotAuthorizedException::class)
     override fun create(req: ServerRequest, db: Repository): UploadPack = UploadPack(db).apply {
-        timeout = timeout
+        timeout = this@ReactiveUploadPackFactory.timeout
         setPackConfig(packConfig)
     }
 }

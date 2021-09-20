@@ -1,6 +1,7 @@
 package com.minus.git.reactive.backend
 
 import com.minus.git.reactive.ReactiveEnabled
+import com.minus.git.reactive.http.api.ServerRequestOpx
 import org.eclipse.jgit.lib.Config
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.transport.resolver.ReceivePackFactory
@@ -9,56 +10,48 @@ import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException
 import org.eclipse.jgit.transport.resolver.UploadPackFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.ServerRequest
+import reactor.kotlin.core.publisher.toMono
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 
 
 @Component
-class SupportedServices(private val services: Array<ProtocolService>) {
+class SupportedServices(private val registered: Map<String, ProtocolService>) {
     @Synchronized
-    fun match(cmd: String) = services.find { it.run { cmd.canHandleCmd() } }
-
-    @Synchronized
-    fun getService(name: String): ProtocolService? {
-        val serviceName = if (!name.startsWith("git-")) "git-$name" else name
-        return services.find { it.commandName == serviceName }
-    }
+    fun match(cmd: GitConst.Cmd) = registered
+        .getOrElse(cmd.slug) { throw UnsupportedGitCmdException(cmd) }
+        .toMono()
 }
 
-abstract class ProtocolService internal constructor(cmdName: String, cfgName: String) {
-    val commandName: String = if (cmdName.startsWith("git-")) cmdName else "git-$cmdName"
+abstract class ProtocolService internal constructor(val cmd: GitConst.Cmd) : ServerRequestOpx {
+    var isOverridable: Boolean = false
+
     open val isEnabled: Boolean
         get() = false
 
-    val configKey: Config.SectionParser<ServiceConfig>
-    var isOverridable: Boolean = false
-
-    init {
-        configKey = Config.SectionParser { cfg -> ServiceConfig(this@ProtocolService, cfg, cfgName) }
-        isOverridable = true
+    val configKey: Config.SectionParser<ServiceConfig> = Config.SectionParser { cfg ->
+        ServiceConfig(this@ProtocolService, cfg, cmd.cfgName)
     }
 
     class ServiceConfig constructor(service: ProtocolService, cfg: Config, name: String) {
         val enabled: Boolean = cfg.getBoolean("gitHttpRequest", name, service.isEnabled)
     }
 
-    fun String.canHandleCmd(): Boolean = commandName == this
-
     @Throws(IOException::class, ServiceNotEnabledException::class, ServiceNotAuthorizedException::class)
     internal abstract fun execute(
         request: ServerRequest,
         repo: Repository,
         extraParameters: Collection<String>,
-        inputStream: InputStream,
-        outputStream: OutputStream
-    )
+        inputStream: InputStream
+    ): OutputStream
 }
 
-@Component
+@Component("git-receive-pack")
 @ReactiveEnabled
 class ReceivePackProtocolService(private val receivePackFactory: ReceivePackFactory<ServerRequest>) :
-    ProtocolService("receive-pack", "receivepack") {
+    ProtocolService(GitConst.Cmd.GIT_RECEIVE_PACK) {
     override val isEnabled
         get() = true
 
@@ -66,15 +59,20 @@ class ReceivePackProtocolService(private val receivePackFactory: ReceivePackFact
         request: ServerRequest,
         repo: Repository,
         extraParameters: Collection<String>,
-        inputStream: InputStream,
-        outputStream: OutputStream
-    ) = receivePackFactory.create(request, repo).receive(inputStream, outputStream, null)
+        inputStream: InputStream
+    ) = ByteArrayOutputStream().apply {
+        receivePackFactory.create(request, repo)
+            .apply {
+                isBiDirectionalPipe = false
+            }
+            .receive(inputStream, this, null)
+    }
 }
 
-@Component
+@Component("git-upload-pack")
 @ReactiveEnabled
 class UploadPackProtocolService(private val uploadPackFactory: UploadPackFactory<ServerRequest>) :
-    ProtocolService("upload-pack", "uploadpack") {
+    ProtocolService(GitConst.Cmd.GIT_UPLOAD_PACK) {
     override val isEnabled
         get() = true
 
@@ -82,10 +80,14 @@ class UploadPackProtocolService(private val uploadPackFactory: UploadPackFactory
         request: ServerRequest,
         repo: Repository,
         extraParameters: Collection<String>,
-        inputStream: InputStream,
-        outputStream: OutputStream
-    ) = uploadPackFactory
-        .create(request, repo)
-        .apply { setExtraParameters(extraParameters) }
-        .upload(inputStream, outputStream, null)
+        inputStream: InputStream
+    ) = ByteArrayOutputStream().apply {
+        uploadPackFactory
+            .create(request, repo)
+            .apply {
+                setExtraParameters(extraParameters)
+                isBiDirectionalPipe = false
+            }
+            .upload(inputStream, this, null)
+    }
 }
