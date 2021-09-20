@@ -1,24 +1,30 @@
 package com.minus.git.reactive.service
 
 import com.minus.git.reactive.repo.CassandraGitRepository
-import com.minus.git.reactive.repo.sanitize
+import com.minus.git.reactive.repo.createDefaultBranch
+import com.minus.git.reactive.repo.gitSanitize
+import mu.KotlinLogging
 import org.eclipse.jgit.errors.RepositoryNotFoundException
 import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription
 import org.intellij.lang.annotations.Language
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.toMono
+import java.util.concurrent.ConcurrentHashMap
 
 data class RepoName(val name: String)
 
+private val logger = KotlinLogging.logger {}
+
 @Service
-class GitRepositoriesService() : DatabaseSessionOps {
+class GitRepositoriesService() :
+    DatabaseSessionOps {
+
     override val keyspace: String
         get() = "system_schema"
 
     @Language("CassandraQL")
-    fun all(): Flux<RepoName> = "SELECT keyspace_name FROM ${keyspace}.keyspaces;"
+    fun all(): Flux<RepoName> = "SELECT keyspace_name FROM ${keyspace}.keyspaces;" //todo: create repos table
         .execute()
         .let { Flux.fromIterable(it) }
         .mapNotNull {
@@ -30,32 +36,29 @@ class GitRepositoriesService() : DatabaseSessionOps {
             }
         }
 
-    fun create(repoName: String): Mono<out CassandraGitRepository> =
-        repoName.sanitize()
-            .flatMap { sanName ->
-                exists(sanName).filter { !it }.map { sanName }
-            }
-            .map {
-                CassandraGitRepository(DfsRepositoryDescription(it)).apply { create() }
-            }
-            .switchIfEmpty(Mono.error(RepositoryExistsException(repoName)))
+    fun create(repoName: String): Mono<CassandraGitRepository> = resolve(repoName, false)
+        .doOnNext { it.createDefaultBranch() }
 
-    fun resolve(repoName: String): Mono<out CassandraGitRepository> =
-        repoName.sanitize()
-            .flatMap { sanName ->
-                exists(sanName).filter { it }.map { sanName }
+    fun resolve(repoName: String, validateExists: Boolean = true): Mono<CassandraGitRepository> =
+        repoName.gitSanitize().map { repoNameSanitized ->
+            repositories.computeIfAbsent(repoName) {
+                if (!validateExists || exists(repoNameSanitized)) {
+                    CassandraGitRepository(DfsRepositoryDescription(it))
+                } else {
+                    throw RepositoryNotFoundException(repoNameSanitized)
+                }.apply {
+                    logger.info { "Loaded repo ${this.description.repositoryName}" }
+                }
             }
-            .map {
-                CassandraGitRepository(DfsRepositoryDescription(it))
-            }
-            .switchIfEmpty(Mono.error(RepositoryNotFoundException(repoName)))
+        }
 
-    fun exists(it: String): Mono<Boolean> = //language=CassandraQL
+    fun exists(it: String): Boolean = //language=CassandraQL
         "SELECT keyspace_name FROM ${keyspace}.keyspaces WHERE keyspace_name='repository_$it'"
-            .execute()
-            .toMono()
-            .map { it.count() == 1 }
+            .execute().count() == 1
 
+    companion object {
+        private val repositories: MutableMap<String, CassandraGitRepository> = ConcurrentHashMap()
+    }
     /*.run {
         req.queryParam("service")
             .flatMap { it.matchService() }

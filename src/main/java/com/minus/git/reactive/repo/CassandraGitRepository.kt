@@ -3,6 +3,7 @@ package com.minus.git.reactive.repo
 import com.minus.git.reactive.repo.store.Tables
 import com.minus.git.reactive.service.DatabaseSessionOps
 import mu.KotlinLogging
+import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.internal.storage.dfs.DfsObjDatabase
 import org.eclipse.jgit.internal.storage.dfs.DfsRefDatabase
 import org.eclipse.jgit.internal.storage.dfs.DfsRepository
@@ -22,6 +23,7 @@ class CassandraGitRepository(repoDesc: DfsRepositoryDescription?) :
 
     private val objdb: DfsObjDatabase
     private val refdb: DfsRefDatabase
+    val git: Git by lazy { Git(this) }
 
     /**
      * Creating a new repository object may result in creating a new repository in the storage layer,
