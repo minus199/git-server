@@ -17,11 +17,3 @@ annotation class Http2Enabled()
     havingValue = "true"
 )
 annotation class ReactiveEnabled()
-
-@ConditionalOnProperty(
-    prefix = "gradify.git-server",
-    name = ["isEnabled"],
-    matchIfMissing = false,
-    havingValue = "true"
-)
-annotation class GitV1Enabled()

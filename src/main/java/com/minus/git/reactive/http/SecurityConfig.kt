@@ -13,13 +13,13 @@ import javax.net.ssl.TrustManagerFactory
 @Configuration
 open class SecurityConfig(
     @Value("\${gradify.ssl.store-pass}") private val storePass: CharArray,
-    @Value("\${gradify.git.server.cert}") val sslJKS: String
+    @Value("\${gradify.ssl.store}") val storePath: String
 ) {
     @Bean
     open fun javaxSslContext(): SSLContext = SSLContext.getInstance("TLS").apply {
         val trustStore = KeyStore.getInstance("jks")
 
-        Thread.currentThread().contextClassLoader.getResourceAsStream(sslJKS).use {
+        Thread.currentThread().contextClassLoader.getResourceAsStream(storePath).use {
             trustStore.load(it, storePass)
         }
 
